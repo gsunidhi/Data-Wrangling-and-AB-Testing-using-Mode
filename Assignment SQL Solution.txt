@@ -1,0 +1,221 @@
+Data Wrangling, Analysis and AB Testing Assignment
+
+1. Compare the final_assignments_qa table to the assignment events we captured for user_level_testing. Write an answer to the following question: Does this table have everything you need to compute metrics like 30-day view-binary?
+
+Answer: No. This table only contains details like item_id, test assignment for  
+     respective test_id. To compute 30-day view-binary, columns such as
+     invoices/line_item_id and price are needed.
+	 
+
+
+2. Write a query and table creation statement to make final_assignments_qa look like the final_assignments table. If you discovered something missing in part 1, you may fill in the value with a place holder of the appropriate data type.
+
+Answer:
+
+SELECT
+  item_id,
+  test_number,
+  test_assignment,
+  '2023-01-01' AS test_start_date
+FROM 
+  (
+    SELECT
+      item_id   AS item_id,
+      'test_a'  AS test_number,
+      test_a    AS test_assignment
+    FROM 
+      dsv1069.final_assignments_qa
+    
+    UNION ALL
+    
+    SELECT
+      item_id,
+      'test_b' AS test_number,
+      test_b AS test_assignment
+    FROM 
+      dsv1069.final_assignments_qa
+    
+    UNION ALL
+    
+    SELECT
+      item_id,
+      'test_c' AS test_number,
+      test_c AS test_assignment
+    FROM 
+      dsv1069.final_assignments_qa
+      
+    UNION ALL
+    
+    SELECT
+      item_id,
+      'test_d' AS test_number,
+      test_d AS test_assignment
+    FROM 
+      dsv1069.final_assignments_qa
+      
+    UNION ALL
+    
+    SELECT
+      item_id,
+      'test_e' AS test_number,
+      test_e AS test_assignment
+    FROM 
+      dsv1069.final_assignments_qa
+    
+    UNION ALL
+    
+    SELECT
+      item_id,
+      'test_f' AS test_number,
+      test_f AS test_assignment
+    FROM 
+      dsv1069.final_assignments_qa
+      
+  ) final_assignment_replica
+ORDER BY item_id 
+
+
+
+3. Use the final_assignments table to calculate the order binary for the 30 day window after the test assignment for item_test_2 (You may include the day the test started)
+
+Answer:
+SELECT 
+  test_assignment,
+  COUNT(item_id)            AS items,
+  SUM(order_binary_30days)  AS order_binary_30days
+FROM
+(
+  SELECT 
+   assign.item_id,
+   assign.test_assignment,
+   assign.test_number,
+   DATE_PART('day', orders.paid_at - assign.test_start_date) AS days,
+   MAX(CASE WHEN (orders.paid_at >= assign.test_start_date)
+       THEN 1 
+       ELSE 0
+       END) AS order_binary_30days
+  FROM 
+    dsv1069.final_assignments AS assign
+  LEFT JOIN
+    dsv1069.orders
+    ON orders.item_id = assign.item_id 
+      AND orders.paid_at >= assign.test_start_date
+      AND DATE_PART('day', orders.paid_at - assign.test_start_date) <=30
+  GROUP BY
+   assign.item_id,
+   assign.test_assignment,
+   assign.test_number,
+   days
+
+) item_level
+WHERE
+  test_number = 'item_test_2'
+GROUP BY
+  test_assignment
+  
+  
+4. Use the final_assignments table to calculate the view binary, and average views for the 30 day window after the test assignment for item_test_2. (You may include the day the test started)
+
+Answer:
+
+SELECT
+  test_assignment,
+  COUNT(item_id)                                              AS item_id,
+  SUM(view_binary_30days)                                     AS view_binary_30days,
+  CAST(SUM(view_binary_30days)*100/COUNT(item_id) AS FLOAT)   AS percent_viewed,
+  SUM(views)                                                  AS views,
+  SUM(views)/COUNT(item_id)                                   AS average_viewed_per_item
+FROM 
+(
+  SELECT 
+   final_assignments.item_id          AS item_id,
+   final_assignments.test_number      AS test_number,
+   final_assignments.test_assignment  AS test_assignment,
+   COUNT(view_item_events.event_id)   AS views,
+   MAX(CASE WHEN (view_item_events.event_time > final_assignments.test_start_date)
+            THEN 1 
+            ELSE 0
+            END ) AS view_binary_30days 
+  FROM 
+    dsv1069.final_assignments
+  LEFT JOIN 
+    (
+      SELECT 
+        CAST(parameter_value AS INT) AS item_id,
+        event_time,
+        event_id
+      FROM 
+        dsv1069.events 
+      WHERE 
+        event_name = 'view_item' AND parameter_name='item_id'
+    ) view_item_events
+    ON final_assignments.item_id = view_item_events.item_id 
+      AND view_item_events.event_time >= final_assignments.test_start_date
+      AND DATE_PART('day', view_item_events.event_time - final_assignments.test_start_date) <=30
+    
+  GROUP BY
+   final_assignments.item_id,
+   final_assignments.test_assignment,
+   final_assignments.test_number
+   
+  ) item_level
+  
+ WHERE 
+   test_number='item_test_2'
+ GROUP BY
+  test_assignment
+  
+  
+
+5. Use the https://thumbtack.github.io/abba/demo/abba.html to compute the lifts in metrics and the p-values for the binary metrics ( 30 day order binary and 30 day view binary) using a interval 95% confidence. 
+
+Answer:
+
+SELECT
+  test_assignment,
+  COUNT(item_id)                                              AS item_id,
+  SUM(view_binary_30days)                                     AS view_binary_30days
+FROM 
+(
+  SELECT 
+   final_assignments.item_id          AS item_id,
+   final_assignments.test_number      AS test_number,
+   final_assignments.test_assignment  AS test_assignment,
+   COUNT(view_item_events.event_id)   AS views,
+   MAX(CASE WHEN (view_item_events.event_time > final_assignments.test_start_date)
+            THEN 1 
+            ELSE 0
+            END ) AS view_binary_30days 
+  FROM 
+    dsv1069.final_assignments
+  LEFT JOIN 
+    (
+      SELECT 
+        CAST(parameter_value AS INT) AS item_id,
+        event_time,
+        event_id
+      FROM 
+        dsv1069.events 
+      WHERE 
+        event_name = 'view_item' AND parameter_name='item_id'
+    ) view_item_events
+    ON final_assignments.item_id = view_item_events.item_id 
+      AND view_item_events.event_time >= final_assignments.test_start_date
+      AND DATE_PART('day', view_item_events.event_time - final_assignments.test_start_date) <=30
+    
+  GROUP BY
+   final_assignments.item_id,
+   final_assignments.test_assignment,
+   final_assignments.test_number
+   
+  ) item_level
+  
+ WHERE 
+   test_number='item_test_2'
+ GROUP BY
+  test_assignment
+  
+ 
+
+
+
