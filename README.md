@@ -1,10 +1,21 @@
 # Data Wrangling, Analysis and AB Testing using Mode
 
-This repository holds text file which contains solution to the assignment from **Coursera's course Data Wrangling, Analysis and AB Testing**
-[Course Completion Link](https://www.coursera.org/account/accomplishments/verify/AMU8UU8V4BSS)
+This assignment was completed for **Data Wrangling, Analysis and AB Testing on Coursera**
+(
+    [Course Completion Link](https://www.coursera.org/account/accomplishments/verify/AMU8UU8V4BSS)
+)
 
-The assignment was based on a **E-commerce Website Dataset** from **Mode Public Warehouse platform**
+The assignment deals with an **E-commerce Website Dataset** from **Mode Public Warehouse platform**. The analysis specifically focuses on 
 
-The Solution report for this assignment is provided [here](https://app.mode.com/moonisgr8/reports/239ecac8277a)
+The Solution report for this assignment is provided on **[Mode platform](https://app.mode.com/moonisgr8/reports/239ecac8277a)**
+
+Below are the results obtained after performaing A/B testing at the item level for an E-commerce website:
+
+1. Cmpute Ordered items for the 30 day window after the Test Start Date
+
+![Order binary](Images\Order binary.png "Order binary")
+
+2. Cmpute Viewed items for the 30 day window after the Test Start Date
+3. Compute Lift and p-value in A/B testing
 
 
