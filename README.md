@@ -17,12 +17,12 @@ Below are the results obtained after performaing A/B testing at the item level f
 
 2. Compute Viewed items for the 30 day window after the Test Start Date
 
-![Order binary](Images\avg_viewed_items.png "Order binary")
+![Percentage Viewed Items](Images\percent_viewed.png "Percentage Viewed Items")
 
 ![Order binary](Images\avg_viewed_items.png "Order binary")
 
 3. Compute Lift and p-value in A/B testing
 
-![Order binary](Images\ab_testing_results.png "Order binary")
+![AB testing](Images\ab_testing_results.png "AB testing")
 
 
